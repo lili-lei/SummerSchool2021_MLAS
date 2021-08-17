@@ -4,9 +4,48 @@ Date: 23-27 August 2021
 Monday August 23, 2017
 Morning
 08:30-08:40 Opening ceremony
-08:40-10:10 Overview, Convention and Motivation: Linear vs Nonlinear, Stochastic vs Deterministic (Dr. Hailing Du, Durham University)
+08:40-10:10 Overview, Motivation and Convention: Stochastic vs Deterministic, Linear vs Nonlinear  (Dr. Hailiang Du, Durham University)
 10:10-10:30 Break
-10:30-12:00 Properties of deterministic nonlinear dynamical systems (Dr. Hailing Du, Durham University)
+10:30-12:00 Properties of deterministic nonlinear dynamical systems (Dr. Hailiang Du, Durham University)
+Afternoon
+14:00-15:30 Fundamental aspects of predictability (Dr. Hailiang Du, Durham University)
+15:30-15:50 Break
+15:50-17:20 Data analysis workshop (Dr. Hailiang Du, Durham University)
 
+Tuesday August 24, 2017
+Morning
+08:30-10:00 Uncertainty quantification and model discrepancy recognition (Dr. Hailiang Du, Durham University)
+10:00-10:20 Break
+10:20-11:50 Forecast interpretation and evaluation (Dr. Hailiang Du, Durham University)
+Afternoon
+14:00-15:30 Classic nonlinear statistical (machine) learning models (Dr. Hailiang Du, Durham University)
+15:30-15:50 Break
+15:50-17:20 Modelling using tree-based methods (workshop) (Dr. Hailiang Du, Durham University)
 
+Wednesday August 25, 2017
+Morning
+08:30-10:00 Summary, discussion and criticise aspects across the board (Dr. Hailiang Du, Durham University)
+10:00-10:20 Break
+10:20-11:50 Big data for the earth system (Dr. Xiaomeng Huang, Tsinghua University)
 
+Afternoon
+14:00-16:00 From Artificial neural network to deep learning (Dr. Xiaomeng Huang, Tsinghua University)
+16:00-16:20 Break
+16:20-17:20 Practical Python, Numpy and Matplotlib (Dr. Xiaomeng Huang, Tsinghua University) 
+
+Thursday August 26, 2017
+Morning
+08:30-10:30 Back propagation algorithm and activation function issues (Dr. Xiaomeng Huang, Tsinghua University)
+10:30-10:50 Break
+10:50-11:50 Handwritten digit recognition task (Dr. Xiaomeng Huang, Tsinghua University)
+Afternoon
+14:00-16:00 Automatic differentiation and diverse deep neural networks (Dr. Xiaomeng Huang, Tsinghua University)
+16:00-16:20 Break
+16:20-17:20 Practical PyTorch Tutorial (Dr. Xiaomeng Huang, Tsinghua University)
+
+Friday August 27, 2017
+Morning
+08:30-10:30 Experiences and tips for deep neural networks tuning (Dr. Xiaomeng Huang, Tsinghua University)
+10:30-10:50 Break
+10:50-12:00 Practical session (Dr. Xiaomeng Huang, Tsinghua University)
+Adjourn
