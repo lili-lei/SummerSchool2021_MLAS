@@ -1,0 +1,94 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+Lecture2 practical exercises 
+========================================================
+
+#
+
+Following the Lecture1 practical exercises, we continue working on Logistic Map to explore some general properties about nonlinear chaotic systems. 
+
+The mathematical form of the Logistic map is 
+$$
+x_{i+1}=ax_i(1-x_i).
+$$ 
+
+##
+
+We first investigate what happens to the initial condition under the action of the Logistic map, i.e. after a 'large' number of iterations, and how it differs with different parameter values. You may use the available code from last practical (and any other code that you find or write yourself).
+
+```{r}
+setwd("/Users/hailiangdu/HDU/Teaching/NanJing_SummerSchool/workshops")
+source('logistic.R')
+```
+
+1. $x_{0} < 0$ or $x_{0} > 1$  and $ 0 < a < 4$
+
+```{r}
+x=logistic(-0.1,2.4,1024)
+x[1:32]
+```
+
+2. $0 < x_{0} < 1$ and $a < 0$ or $a > 4$
+3. $0 < x_{0} < 1$ and $a < 0$
+4. $0 < x_{0} < 1$ and $0 < a < 1 $
+5. $0 < x_{0} < 1$ and $1 < a < 3 $
+6. $0 < x_{0} < 1$ and $a = 1+\sqrt(6)$
+7. $0 < x_{0} < 1$ and $a = 3.5685$
+8. $0 < x_{0} < 1$ and $a = 4$
+
+
+##
+
+Now let's investigate whether Logistic map has the property of sensitive dependence on initial condition.
+
+1. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.1$, after how many iterations are the two resulting states seperated by more than 0.5?
+2. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.01$, after how many iterations are the two resulting states seperated by more than 0.5?
+3. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.001$, after how many iterations are the two resulting states seperated by more than 0.5?
+4. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.0001$, after how many iterations are the two resulting states seperated by more than 0.5?
+5. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.00001$, after how many iterations are the two resulting states seperated by more than 0.5?
+6. consider $0.1 < x_{0} < 0.9$ and $x_{0} +\epsilon, \epsilon < 0.000001$, after how many iterations are the two resulting states seperated by
+  more than 0.5?
+
+**consider $0 < x_{0} < 1$ and $a=4$,\ will the final state be equal to $x_{0}$ after a number of iterations?
+
+##
+
+Advanced work: 
+
+i) Generate a long time series of points from the logistic map initialising from some $x_0\in[0, 1]$ and draw the parameter a from $U(2.4, 4)$. After
+1024 points, continue but with a new value of $a$ drawn from $U(2.4, 4)$. Repeat, drawing new values of a every 1024 points. Once you have reached a certain predetermined number of different parameter values (for example 128 or 256), stop. Make a scatter plot with the parameter value
+on the x axis and the system values on the y axis.
+
+```{r}
+### First task we plot using all sequential values 
+par=runif(1,2.4,4)	# draw parameter from U(2.4,4)
+x1=logistic(0.4,par,1024)[2:1025] ### generate 1024 points (ic is included in output of logistic.R so we exclude it.)
+a1=rep(par,1024) # create a 1024x1 vector of values of a.
+for (i in 2:128) ##loop through different random parameter values, adding x and a values to the vectors
+{
+	par=runif(1,2.4,4)	
+	x1=c(x1,logistic(x1[(i-1)*1024],par,1024)[2:1025])
+	a1=c(a1,rep(par,1024))
+}
+plot(a1,x1,xlab='a',ylab='x') #plot a1 against x1
+```
+
+ii) Repeat task i) but this time change the parameter value every 2048 steps. Make a new scatter plot but with only the final 1024 points for each parameter value (ignoring the first 1024).
+
+```{r}
+### Second plot using non-transient values
+par=runif(1,2.4,4)	#draw parameter from U(2.4,4)
+x2=logistic(0.4,par,2048)[1026:2049] ### generate 2048 points and put the final 1024 into x2
+a2=rep(par,1024) #store the parameter values
+for (i in 2:128) ##loop through different parameter values, adding x and a values to the vectors
+{
+	par=runif(1,2.4,4)	
+	x2=c(x2,logistic(x2[1024],par,2048)[1026:2049])
+	a2=c(a2,rep(par,1024))
+}
+plot(a2,x2,xlab='a',ylab='x') #plot a2 against x2
+```
+
