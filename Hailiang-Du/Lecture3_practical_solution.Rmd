@@ -1,0 +1,92 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+Lecture3 practical exercises 
+========================================================
+
+#
+
+In this practical we will use R to explore lyapunov exponents and doubling times of a simple class of one Dimensional map, tent map. The simplest tent map is symmetrical and is defined by 
+
+\[ x_{i+1}  = \left\{ \begin{array}{ll} 2x_{i} & 0 < x_{i} \le 1/2  \\
+    -2x_{i}+2 & 1/2 < x_{i} \le 1 \end{array} \right. \]
+
+We can define a general tent map by
+\[ x_{i+1}  = \left\{ \begin{array}{ll} \frac{x_{i}}{A} & 0 < x_{i} \le A  \\
+    -\frac{x_{i}}{1-A}+\frac{A}{1-A}+1 & A < x_{i} \le 1 \end{array} \right. \]
+The functions and script files that you need can be found in the shared folder: tentmap.m, lyapunov.m, doublingtime.m, Qplingtime.m.
+
+```{r}
+setwd("/Users/hailiangdu/HDU/Teaching/NanJing_SummerSchool/workshops")
+source('doublingtime.R')
+source('tentmap.R')
+source('lyapunov.R')
+source('Qplingtime.R')
+```
+
+## 1. Find the finite time (one step) Lyapunov exponent, $\lambda$, of the tent map for the parameter values $A = 0:01,...,0.99$. Plot $\lambda$ against $A$.
+
+
+```{r}
+mean_lyap<-numeric() #define vector
+for (i in 1:99) # Create for loop from 1 to 99 to convert to 0.01 to 0.99 later
+{
+mean_lyap[i]=mean(lyapunov(runif(1024),0.00001,0.01*i)) 
+#Estimate the mean one step Lyapunov exponent using random numbers from (0,1)
+}
+
+plot(mean_lyap,xlab='A',ylab='lambda') #plot lambda against A
+```
+
+## 2. For the same values of $A$, find the mean doubling time of the tent map. Plot $\tau_2$ against $A$.
+
+```{r}
+doubtime<-numeric() #define vector
+for (i in 1:99) # Create for loop from 1 to 99 to convert to 0.01 to 0.99 later
+{
+doubtime[i]=mean(doublingtime(runif(1024),0.00001,0.01*i)) 
+#Estimate the mean one step Lyapunov exponent using random numbers from (0,1)
+}
+
+plot(doubtime,xlab='A',ylab=expression(tau[2])) #plot doubling time against A
+
+```
+
+## 3. Do the estimates of the Lyapunov exponent depend on $\epsilon$, the initial separation?
+
+Large values of epsilon can give you poor estimates.  Remember that Lyapunov exponents are defined as the limit as epsilon tends to zero.
+
+## 4. Do the estimates of the Doubling time depend on $\epsilon$, the initial separation?
+
+Yes, large values of epsilon may lead to the gradient of the perturbed initial condition differs from that of the initial condition. 
+
+## 5. Find the analytical Lyapunov exponent as a function of A (Hint: system values are uniformly distributed over (0, 1)). How does this compare with the values found in part 1.?
+
+The analytical lyapunov exponent is given by $A*\log_2(1/A)+(1-A)*\log_2(1/(1-A))$.  This is because there is a probability of $A$ that the gradient is $1/A$ and a probability of $1-A$ that the gradient is $1/(1-A)$.
+
+```{r}
+A=0.01*(1:99)
+plot(A*log2(1/A)+(1-A)*log2(1/(1-A)),xlab='A',ylab='lambda')
+```
+
+## 6. For the same values of A as you used in parts 1 and 2, compute the 4-pling time $\tau_4$ (the average time it takes for an initial error to grow to 4 times its initial value) of the tent map. Do the same for $\tau_8$ and $\tau_16$. Is $\tau_{2k}$ = $2\tau_k$?
+
+```{r}
+Qtime4=numeric() #define vectors
+Qtime8=numeric()
+Qtime16=numeric()
+for (i in 1:99) # Create for loop from 1 to 99 to convert to 0.01 to 0.99 later
+{
+Qtime4[i]=mean(Qplingtime(runif(1024),0.001,0.01*i,4)) #Find means for each Q
+Qtime8[i]=mean(Qplingtime(runif(1024),0.001,0.01*i,8))
+Qtime16[i]=mean(Qplingtime(runif(1024),0.001,0.01*i,16))
+}
+
+plot(Qtime4,xlab='A',ylab=expression(tau[4])) #plot
+plot(Qtime8,xlab='A',ylab=expression(tau[8]))
+plot(Qtime16,xlab='A',ylab=expression(tau[16]))
+plot(doubtime,Qtime4, xlab=expression(tau[2]),ylab=expression(tau[4]))
+abline(0,1)
+```
