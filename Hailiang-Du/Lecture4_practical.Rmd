@@ -1,0 +1,176 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+Lecture4 practical exercises 
+========================================================
+
+#
+
+In this workshop we use R to carry out a number of  statistical analysis of some time series data
+
+: anger.dat, envy.dat, gluttony.dat, greed.dat, lust.dat, pride.dat, sloth.dat. 
+
+The function and script files that you need can be found in the shared folder including: boostrap.R, delayplot.R, autoCC.R.
+
+Make sure you set the correct working directory to the one contains those function and script files and compile them.
+
+```{r}
+setwd("/Users/hailiangdu/HDU/Teaching/NanJing_SummerSchool/workshops")
+source('delayplot.R')
+source('autoCC.R')
+source('bootstrap.R')
+source('stsp.R')
+source('autoMI.R')
+source('entropy.R')
+source('JointProb.R')
+source('PCA.R')
+```
+
+The time series we are going to investigate are all univariate data set, we can simply use the 'scan' function to load one of the data sets into the R workspace. For example:
+
+```{r}
+x<-scan('pride.dat')
+```
+
+##
+
+We first compute a few simple statistics about the data set.
+
+i) Count the number of data points in the data set (Use the 'length' function)
+
+```{r}
+Ndata=length(x) #finds length of vector
+```
+
+We have `r Ndata` of data points in the data set.
+
+ii) count the number of unique data points (Use the 'unique' function), and compute the quantisation $Q = Ndata/Nunique$. 
+
+```{r}
+Nunique=length(unique(x)) #finds number of unique values in vector
+quant=Ndata/Nunique #find quantisation
+```
+We have `r Nunique` unique data points in the data set, the quantisation is `r quant`.
+
+iii) compute the mean with $95\%$ bootstrapped error bars; compute the median with $95\%$ bootstrapped error bars;
+compute the standard deviation with $95\%$ bootstrapped error bars; compute the skewness with $95\%$ bootstrapped error bars and compute the kurtosis with $95\%$ bootstrapped error bars. You will need to install and load the 'moments' library. and use the "skewness" and "kurtosis" functions. Bootstrap (sample with replacement) is a simple useful approach to estimate the uncertainty of a sample statistics.
+
+```{r}
+#if the package 'moments' was not installed, uncomment the following line.
+#install.packages('moments') #install package for skewness and kurtosis
+library(moments) #load package
+
+Nbootstrap<-1024  #set the number of bootstrap samples
+t_mean=numeric()
+t_median=numeric()
+t_sd=numeric()
+t_skewness=numeric()
+t_kurtosis=numeric()
+
+for (i in 1:Nbootstrap)
+{
+	t_sample<-bootstrap(x)
+	t_mean[i]<-mean(t_sample)
+	t_median[i]<-median(t_sample)
+	t_sd[i]<-sd(t_sample)
+	t_skewness[i]<-skewness(t_sample)
+	t_kurtosis[i]<-kurtosis(t_sample)
+}
+mean_l=quantile(t_mean,0.025)
+mean_u=quantile(t_mean,0.975)
+
+median_l=quantile(t_median,0.025)
+median_u=quantile(t_median,0.975)
+
+sd_l=quantile(t_sd,0.025)
+sd_u=quantile(t_sd,0.975)
+
+skewness_l=quantile(t_skewness,0.025)
+skewness_u=quantile(t_skewness,0.975)
+
+kurtosis_l=quantile(t_kurtosis,0.025)
+kurtosis_u=quantile(t_kurtosis,0.975)
+```
+
+The mean of data is `r mean(x)` with $95\%$ bootstrapped error bars (`r mean_l`,`r mean_u`)
+
+The median of data is `r median(x)` with $95\%$ bootstrapped error bars (`r median_l`,`r median_u`)
+
+The standard deviation of data is `r sd(x)` with $95\%$ bootstrapped error bars (`r sd_l`,`r sd_u`)
+
+The skewness of data is `r skewness(x)` with $95\%$ bootstrapped error bars (`r skewness_l`,`r skewness_u`)
+
+The kurtosis of data is `r kurtosis(x)` with $95\%$ bootstrapped error bars (`r kurtosis_l`,`r kurtosis_u`)
+
+
+iv) compute the range of the data; compute the minimum value and the maximum value
+
+The range of the data is `r max(x)-min(x)` with minimum value `r min(x)` and maximum value `r max(x)`.
+
+##
+
+Similar to the first Lecture practical, we now make a few 
+simple analysis plots of the data.
+
+i) Plot the time series
+```{r}
+plot(x,xlab='N',type="l")
+plot(x[1:128],xlab='N',type="l") #make a zoom in plot
+```
+
+
+ii) make a histogram of the time series and its first difference with $\sim\sqrt{N}$ bins. 
+
+```{r}
+hist(x,breaks=floor(sqrt(length(x))),main =NULL)
+hist(x[2:length(x)]-x[1:length(x)-1],breaks=floor(sqrt(length(x))),main =NULL, xlab=expression(paste(Delta, 'x')))
+```
+
+iii) Compute and plot the autocorrelation functions up to lag 50.
+
+```{r}
+autoCC(x,50)
+plot(0:50,autoCC(x,50),pch=1,type="b",ylab='autocorrelation', xlab="lag") 
+```
+
+iv) make a delay plot
+```{r}
+delayplot(x,1)
+```
+
+
+##
+
+Plot the space-time seperation plot up to lag=50. The space time separation plot considers explicitly the separation in time and space between pairs of points in a time series. We can use the function code stsp.R to generate the corresponding statistics. 
+
+```{r}
+Q=c(5, 50, 95); 
+# Q a row vector of quartiles, e.g. to get 25th, median and 95th separations
+STP=stsp(x,50,Q)
+matplot(log2(t(STP)), type='l', pch=1, lwd = 4, xlab=expression(paste(Delta, 't')), ylab=expression(paste('log'[2], Delta, 'x')))
+```
+
+##
+The sample correlation coefficient measures the strength of the linear relationship between two signals. To measure the relationship including both linear and nonlinear relations, we can use Mutual Information.
+
+```{r}
+MI=autoMI(x,50,32) 
+plot(0:50,MI,pch=1,type="b", ylab='Mutual Information', xlab="lag") 
+```
+
+
+## 
+To choose a reasonable dimension of delay reconstruction for modelling. We apply Principal Component Analysis to the reconstructed data up to lag 16 (for example), plot the singular values which reflects the proportion of total variance explained by the corresponding principal component and plot the first three singular vectors.
+```{r}
+PCA_list=PCA(x,16) #PCA_list contains the singular values Sigma and singular vector V
+plot(PCA_list$Sigma/sum(PCA_list$Sigma),pch='+',type="b",xlab='Component', ylab=expression(paste(sigma[i], '/',  Sigma, sigma[j])))
+
+#par(mfrow = c(3, 1))
+plot(PCA_list$V[,1],type='l',ylim=c(-1,1),xlab='Component', ylab='V1')
+plot(PCA_list$V[,2],type='l',ylim=c(-1,1),xlab='Component', ylab='V2')
+plot(PCA_list$V[,3],type='l',ylim=c(-1,1),xlab='Component', ylab='V3')
+
+
+```
