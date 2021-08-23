@@ -3,7 +3,7 @@ The 2021 Summer School titled by "Machine Learning for Atmospheric Scicences" is
 
 Our lecturers are Dr. Xiaomeng Huang from Tsinghua University and Dr. Hailiang Du from Durhan University. 
 
-Before you distributing the code and data from the summer school, please consult the lecturers and us first. 
+If you are willing to distribute the code and data from the summer school, please consult the lecturers and us first. 
 
 During the summer school, any questions and comments can be submitted to the "Issues" on the top of the mainpage.
 
