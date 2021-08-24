@@ -1,0 +1,642 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Tree based methods
+========================================================
+
+In this workshop, we will explore tree based methods. 
+
+The first experiment will be based on synthetic (surrogate) datasets. As the name suggests, quite obviously, a synthetic dataset is a repository of data that is generated programmatically (artificially), it is not collected by any real-life survey or experiment. In practice, it is almost impossible to know the underlying system behind the real data. For synthetic data, however, we know exactly what is the underlying system behind the data. It provides a flexible and rich "test" environment to help us to explore a methodology, demonstrate its effectiveness and uncover its pros and cons by conducting experiments upon. For example, if we want to test a linear regression fitting algorithm, we may create a synthetic dataset using a linear regression model and pretend not knowing the parameters of the model.  
+
+In the lecture, we introduced a greedy (top-down) fitting algorithm. Let's create a synthetic dataset to explore the algorithm.  
+
+```{r}
+set.seed(212)
+data_surrogate <- data.frame(x = c(runif(200, 0, 0.4), runif(400, 0.4, 0.65), runif(300, 0.65, 1)),
+                             y = c(rnorm(200, 1.5), rnorm(400, 0), rnorm(300, 2)))
+```
+set.seed() function is used to set the random generator state. So that the random data generated later can be reproduced using the same "seed". For more information, run ?set.seed in the R console window.
+
+========================================================
+
+Excercise 1.1: 
+
+  * Please explain how the data frame "data_surrogate" was generated. You may look up the function runif and rnorm via ?runif and ?rnorm.
+  
+  x and y are paired, for the first 200 observations, x is drawn uniformly between 0 and 0.4 and y is drawn from normal distribution with mean 1.5 and standard deviation 1;  for the next 400 observations, x is drawn uniformly between 0.4 and 0.65 and y is drawn from normal distribution with mean 0 and standard deviation 1; and for the last 300 observations, x is drawn uniformly between 0.65 and 1 and y is drawn from normal distribution with mean 2 and standard deviation 1
+  
+========================================================
+
+It is always a good idea to plot the data before analysing and modelling it. Here is a visualization of the data set. 
+
+```{r}
+plot(x=data_surrogate$x[1:200], y=data_surrogate$y[1:200], col='blue',
+     xlab="X", ylab="Y", pch=19, xlim=c(0,1),ylim=c(-2,4))
+points(x=data_surrogate$x[201:600], y=data_surrogate$y[201:600], col='red', pch=19)
+points(x=data_surrogate$x[601:900], y=data_surrogate$y[601:900], col='green', pch=19)
+```
+
+========================================================
+
+Excercise 1.2: 
+
+  * Now given this data set and knowing how it was generated, what's the best tree-based model you would expect when modelling variable y using variable x.
+  
+  A regression tree with three terminal nodes, when x is between 0 and 0.4, y equals 1.5; when x is between 0.4 and 0.65, y equals 0; x is between 0.65 and 1, y equals 2.
+  
+========================================================
+
+
+Now let's build a regression tree model for the dataset using R.
+
+```{r}
+library("tree")
+```
+You may need to install the "tree" package first, using install.packages("tree").
+
+
+```{r}
+tree_fit=tree(y~x,data_surrogate)
+```
+The "tree" function is to fit a classification or regression tree using the greedy fitting algorithm. 
+
+```{r}
+summary(tree_fit)
+tree_fit
+```
+The deviance is simply the sum of squared errors for the tree/subtree.
+
+```{r}
+plot(tree_fit)
+text(tree_fit,pretty=0)
+#If pretty = 0 then the level names of a factor split attributes are used unchanged. 
+```
+This is a nice way to plot the tree model, is it consistent with your expectation?
+Clearly one of the advantages of tree-based model is its interpretation.
+
+========================================================
+
+Excercise 1.3: 
+
+  * Create an independent data set (the same way that data_surrogate was created) as a test set, name it data_surrogate_test.
+  * use "tree_pred=predict(tree_fit,data_surrogate_test)" to generate the model prediction of y variable using the tree model fitted early.
+  
+========================================================
+```{r}
+set.seed(347)
+data_surrogate_test <- data.frame(x = c(runif(200, 0, 0.4), runif(400, 0.4, 0.65), runif(300, 0.65, 1)),
+                                  y = c(rnorm(200, 1.5),    rnorm(400, 0),         rnorm(300, 2)))
+tree_pred=predict(tree_fit,data_surrogate_test)
+```
+
+========================================================
+
+Excercise 1.4: 
+
+  * Draw a scatter plot (same as the one drawn for data set "data_surrogate") for the test set and add y_pred to the plot
+  * Calculate the mean squared error of the residual. 
+  
+========================================================
+
+```{r}
+plot(x=data_surrogate_test$x[1:200], y=data_surrogate_test$y[1:200],
+     col='blue', xlab="X", ylab="Y", pch=19, xlim=c(0,1), ylim=c(-2,4))
+points(x=data_surrogate_test$x[201:600], y=data_surrogate_test$y[201:600], col='red', pch=19)
+points(x=data_surrogate_test$x[601:900], y=data_surrogate_test$y[601:900], col='green', pch=19)
+points(x=data_surrogate_test$x,y=tree_pred,col='black',pch=8)
+
+pred_mse=mean((data_surrogate_test$y-tree_pred)^2)
+pred_mse
+
+```
+
+So far everything seems all right! The regression tree works almost perfectly. Note that we have used a rather large data set as a train set to fit the tree, what if the historical data is rather small?
+
+  
+========================================================
+
+Excercise 1.5: 
+
+  * Create an independent training data set (the same way that data_surrogate was created) but with the number of observations 10 times smaller. And draw a scatter plot of the data.
+  * Build a regression tree using the new small training set. Look at the summary of the tree model, is it still consistent with your expectation?
+  * Use the new tree model to predict the y variable in the test set and record the mean squared error.
+  
+========================================================
+
+```{r}
+set.seed(739)
+
+data_surrogate_s <- data.frame(x = c(runif(20, 0, 0.4), runif(40, 0.4, 0.65), 
+                                     runif(30, 0.65, 1)), y = c(rnorm(20, 1.5),    rnorm(40, 0),         rnorm(30, 2)))
+plot(x=data_surrogate_s$x[1:20], y=data_surrogate_s$y[1:20], col='blue',
+     xlab="X", ylab="Y", pch=19, xlim=c(0,1),ylim=c(-2,4))
+points(x=data_surrogate_s$x[21:60], y=data_surrogate_s$y[21:60], col='red', pch=19)
+points(x=data_surrogate_s$x[61:90], y=data_surrogate_s$y[61:90], col='green', pch=19)
+
+tree_fit_s=tree(y~x,data_surrogate_s)
+summary(tree_fit_s)
+tree_fit_s
+plot(tree_fit_s)
+text(tree_fit_s,pretty=0)
+
+tree_pred_s=predict(tree_fit_s,data_surrogate_test)
+plot(x=data_surrogate_test$x[1:200], y=data_surrogate_test$y[1:200],
+     col='blue', xlab="X", ylab="Y", pch=19, xlim=c(0,1), ylim=c(-2,4))
+points(x=data_surrogate_test$x[201:600], y=data_surrogate_test$y[201:600], col='red', pch=19)
+points(x=data_surrogate_test$x[601:900], y=data_surrogate_test$y[601:900], col='green', pch=19)
+points(x=data_surrogate_test$x,y=tree_pred_s,col='black',pch=8)
+
+pred_mse=mean((data_surrogate_test$y-tree_pred_s)^2)
+pred_mse
+```
+
+
+========================================================
+
+We create another independent train set and fit a regression tree:
+```{r}
+set.seed(779)
+
+data_surrogate_s <- data.frame(x = c(runif(20, 0, 0.4), runif(40, 0.4, 0.65), runif(30, 0.65, 1)),
+                               y = c(rnorm(20, 1.5),    rnorm(40, 0),         rnorm(30, 2)))
+
+plot(x=data_surrogate_s$x[1:20], y=data_surrogate_s$y[1:20], col='blue',
+     xlab="X", ylab="Y", pch=19, xlim=c(0,1),ylim=c(-2,4))
+points(x=data_surrogate_s$x[21:60], y=data_surrogate_s$y[21:60], col='red', pch=19)
+points(x=data_surrogate_s$x[61:90], y=data_surrogate_s$y[61:90], col='green', pch=19)
+tree_fit_s=tree(y~x,data_surrogate_s)
+summary(tree_fit_s)
+tree_fit_s
+plot(tree_fit_s)
+text(tree_fit_s,pretty=0)
+```
+
+
+Now we use the cv.tree() function to see whether pruning the tree using the weakest link algorithm will improve performance.
+```{r}
+tree_cv_prune=cv.tree(tree_fit_s,FUN=prune.tree)
+tree_cv_prune
+plot(tree_cv_prune)
+```
+
+k is the cost-complexity parameter in the weakest link pruning introduced in the lecture. 
+
+```{r}
+tree_fit_prune=prune.tree(tree_fit_s,best=3)
+# you may also prune the tree by spefifying the cost-complexity parameter k
+# for example tree_fit_prune=prune.tree(tree_fit_s,k=5)
+tree_fit_prune
+plot(tree_fit_prune)
+text(tree_fit_prune,pretty=0)
+```
+
+========================================================
+
+Excercise 1.6: 
+
+  * Use the pruned tree model to predict the y variable in the test set and record the mean squared error.
+  * Compare the mean squared error with that resulted from unpruned tree
+  
+========================================================
+
+```{r}
+tree_pred_prune=predict(tree_fit_prune,data_surrogate_test)
+plot(x=data_surrogate_test$x[1:200], y=data_surrogate_test$y[1:200],
+     col='blue', xlab="X", ylab="Y", pch=19, xlim=c(0,1), ylim=c(-2,4))
+points(x=data_surrogate_test$x[201:600], y=data_surrogate_test$y[201:600], col='red', pch=19)
+points(x=data_surrogate_test$x[601:900], y=data_surrogate_test$y[601:900], col='green', pch=19)
+points(x=data_surrogate_test$x,y=tree_pred_prune,col='black',pch=8)
+
+pred_mse_prune=mean((data_surrogate_test$y-tree_pred_prune)^2)
+pred_mse_prune
+pred_mse-pred_mse_prune
+```
+
+========================================================
+
+Excercise 1.7: 
+
+  * create another small training set, fit regression trees with and without pruning and compare the prediction mean squared error.
+  
+========================================================
+
+```{r}
+data_surrogate_s <- data.frame(x = c(runif(20, 0, 0.4), runif(40, 0.4, 0.65), runif(30, 0.65, 1)),y = c(rnorm(20, 1.5),    rnorm(40, 0),         rnorm(30, 2)))
+  tree_fit_s=tree(y~x,data_surrogate_s)
+  tree_pred_s=predict(tree_fit_s,data_surrogate_test)
+  pred_mse_s=mean((data_surrogate_test$y-tree_pred_s)^2)
+  tree_fit_prune=prune.tree(tree_fit_s,k=5)
+  tree_pred_prune=predict(tree_fit_prune,data_surrogate_test)
+  pred_mse_prune=mean((data_surrogate_test$y-tree_pred_prune)^2)
+  pred_mse_s-pred_mse_prune
+```
+========================================================
+
+Excercise 1.8: 
+
+  * create a function named "prune_improvement(k)" that creates an independent small training set and compares pruned and unpruned trees with cost-complexity parameter as input parameter and return the difference in prediction mean squared error.
+  * run the function 1024 times and calculate the average improvement in prediction mean squared error. You may you "sapply" function, for example: sapply(1:1024, FUN=function(i){prune_improvement(5)})
+
+
+  
+========================================================
+
+```{r}
+prune_improvement <- function(k) {
+  data_surrogate_s <- data.frame(x = c(runif(20, 0, 0.4), runif(40, 0.4, 0.65), runif(30, 0.65, 1)),y = c(rnorm(20, 1.5),    rnorm(40, 0),         rnorm(30, 2)))
+  tree_fit_s=tree(y~x,data_surrogate_s)
+  tree_pred_s=predict(tree_fit_s,data_surrogate_test)
+  pred_mse_s=mean((data_surrogate_test$y-tree_pred_s)^2)
+  tree_fit_prune=prune.tree(tree_fit_s,k=5)
+  tree_pred_prune=predict(tree_fit_prune,data_surrogate_test)
+  pred_mse_prune=mean((data_surrogate_test$y-tree_pred_prune)^2)
+  dif_t=pred_mse_s-pred_mse_prune
+  return(dif_t)  
+}
+mean(sapply(1:1024, FUN=function(i){prune_improvement(5)}))
+```
+
+
+We now explore classification trees by analyzing the Carseats data set. 
+```{r}
+library(ISLR)
+library(tree)
+attach(Carseats)
+```
+
+You may need to install the "tree" and "ISLR" package first, using install.packages("tree") and install.packages("ISLR"). 
+"Carseats" is a database in the "ISLR" package, after calling attach(Carseats), objects in the Carseats database can be accessed by simply giving their names.
+
+Please try using "?Carseats" in the console first to read the help notes of the data. First, let's have a look at the summary of the data using the `skimr` package. You may need to install the "skimr" package first using install.packages("skimr")
+```{r}
+library("skimr")
+skim(Carseats)
+```
+`skimr` is a great way to get an immediate feel for the data and integrates well with Rmd, if you later knit to a web document, the above summary is formatted into a proper HTML table.
+
+
+In these data, we are interested in how the "Sales" is influenced by the rest of variables. Note that "Sales" is a continuous variable, to build classification tree we first record it as a binary variable. We use the ifelse() function to create a variable, called "High", which takes on a value of Yes if the Sales variable exceeds 8, and takes on a value of No otherwise. We then include it in the same dataframe via the data.frame() function to merge High with the rest of the Carseats data.
+```{r}
+High=ifelse(Sales<=8,"No","Yes")
+Carseats=data.frame(Carseats, High)
+Carseats$High <- as.factor(Carseats$High) 
+```
+as.factor() encodes the vector "High" as a factor (categorical variable).
+
+Now we fit a classification tree to these data, and summarize and plot it. Notice that we have to _exclude_ "Sales" from the right-hand side of the formula, because the response is derived from it.
+```{r}
+tree.carseats=tree(High~.-Sales,data=Carseats)
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats,pretty=0)
+```
+We see that the training classification error rate is 9%. For classification trees, the deviance is calculated using cross-entropy (see lecture slides).
+
+For a detailed summary of the tree, print it:
+```{r}
+tree.carseats
+```
+
+In order to properly evaluate the performance of a classification tree on
+these data, we must estimate the test error rather than simply computing
+the training error. We split the observations into a training set (250 observations) and a test set (150 observations)
+```{r}
+set.seed(743)
+train_index=sample(1:nrow(Carseats),250)
+data_train=Carseats[train_index,]
+data_test=Carseats[-train_index,]
+```
+
+Now we can build a classification tree using the training set, and evaluate its performance on the test set. 
+
+
+```{r}
+tree.carseats=tree(High~.-Sales,data_train)
+plot(tree.carseats);text(tree.carseats,pretty=0)
+tree.pred=predict(tree.carseats,data_test,type="class")
+table(tree.pred, data_test$High)
+```
+
+========================================================
+
+What is the percentage of correct predictions?
+
+========================================================
+
+
+This tree was grown to full depth, and might be overfitting. We now use cv.tree to prune it. We use the argument FUN=prune.misclass in order to indicate that we want the classification error rate to guide the cross-validation and pruning process, rather than the default for the cv.tree() function, which is deviance.And we now apply the prune.misclass() function to prune the tree according to the results from cv.tree().
+```{r}
+cv.carseats=cv.tree(tree.carseats,FUN=prune.misclass)
+cv.carseats
+plot(cv.carseats)
+prune.carseats=prune.misclass(tree.carseats,best=10)
+plot(prune.carseats);text(prune.carseats,pretty=0)
+```
+
+Now lets evaluate this pruned tree on the test data.
+```{r}
+tree.pred_prune=predict(prune.carseats,data_test,type="class")
+table(tree.pred_prune, data_test$High)
+```
+
+========================================================
+
+How would you interpret the results comparing with unpruned tree?
+
+========================================================
+
+
+Now let's apply what we have learned on a brand new data set, Boston housing data. The data set set in the `MASS` package. It gives housing values and other statistics in each of 506 suburbs of Boston based on a 1970 census.
+```{r}
+library(MASS)
+```
+
+The goal is to build a model to predict variable "medv" using the rest of variables. 
+
+========================================================
+
+Excercise 1.9:
+
+   * use skim() function to look at the summary of the data
+   
+   * Divide the dataset into two part, training set (half the dataset) and test set (the other half the dataset). 
+   
+   * Fit a regression tree to the training set, plot the tree
+   
+   * predict "medv" using the test set and record the mean squared error
+   
+   * prune the tree using cv.tree() and plot the pruned tree
+   
+   * predict "medv" using the test set and pruned tree, recorder the mean squared error and compare it with unpruned tree
+   
+   * comment on your results
+
+========================================================
+
+```{r}
+skim(Boston)
+set.seed (1)
+train = sample (1: nrow(Boston ), nrow(Boston )/2)
+data_train=Boston[train,]
+data_test=Boston[-train,]
+tree.boston=tree(medv~.,data_train)
+summary(tree.boston)
+plot(tree.boston)
+text(tree.boston,pretty =0)
+yhat=predict(tree.boston,data_test)
+mean((yhat -data_test$medv)^2)
+cv.boston =cv.tree(tree.boston)
+plot(cv.boston)
+prune.boston =prune.tree(tree.boston ,best =6)
+plot(prune.boston)
+text(prune.boston,pretty =0)
+yhat=predict(prune.boston,data_test)
+mean((yhat -data_test$medv)^2)
+
+```
+
+
+Here we apply bagging and random forests to the Boston data, using the
+randomForest package in R. Note that bagging is simply a special case of
+a random forest with m = p. Therefore, the randomForest() function can
+be used to perform both random forests and bagging. We perform bagging as follows:
+```{r}
+library (randomForest)
+#you may need to install the randomForest library first
+set.seed (472)
+bag.boston =randomForest(medv~.,data=data_train,mtry=13, ntree=10, importance =TRUE)
+bag.boston
+```
+Note there are 13 predictors in the Boston data, the argument mtry=13 indicates that all 13 predictors are considered for each split of the tree, in other words, bagging is conducted. ntree=10 indicates 10 bootstrap trees are generated in this bagged model. The MSR and % variance explained are based on OOB (out-of-bag) estimates
+
+We can also evaluate the performance of bagged model using the test set:
+```{r}
+pred.bag = predict (bag.boston,newdata =data_test)
+plot(pred.bag , data_test$medv)
+abline (0,1)
+mean(( pred.bag -data_test$medv)^2)
+```
+The test set MSE associated with the bagged regression tree is much smaller than that obtained using an optimally-pruned single CART. 
+
+
+========================================================
+
+  Excercise 1.10 
+  
+       * Increasing the number of bootstrap trees generated in the bagged model to 100 and 1000, record the test set MSE respectively and compare them to the bagged model with 10 bootstrap trees.
+
+========================================================
+
+```{r}
+bag.boston =randomForest(medv~.,data=data_train,mtry=13, ntree=100, importance =TRUE)
+pred.bag = predict (bag.boston,newdata =data_test)
+mean(( pred.bag -data_test$medv)^2)
+
+bag.boston =randomForest(medv~.,data=data_train,mtry=13, ntree=1000, importance =TRUE)
+pred.bag = predict (bag.boston,newdata =data_test)
+mean(( pred.bag -data_test$medv)^2)
+```
+
+========================================================
+
+Random Forests
+
+========================================================
+
+Growing a random forest proceeds in exactly the same way, except that
+we use a smaller value of the mtry argument. By default, randomForest()
+uses p/3 variables when building a random forest of regression trees, and
+sqrt(p) variables when building a random forest of classification trees. 
+
+
+========================================================
+
+  Excercise 1.11
+  
+       * Build a random forest by considering 4 out of total 13 predictors in each split fitting.
+       * Record the test set MSE and compare it with that from bagging.
+
+========================================================
+
+```{r}
+rf.boston =randomForest(medv~.,data=data_train,mtry=4, ntree=100, importance =TRUE)
+pred.rf = predict (rf.boston,newdata =data_test)
+mean(( pred.rf -data_test$medv)^2)
+```
+
+========================================================
+
+  Excercise 1.12
+  
+      * Using the importance() function to view the importance of each variable. And interpret the outputs. (hint: type ?importance in the console for detailed description of importance() function) 
+      * Using the varImpPlot() to plot the importance measures and interpret the results. (hint: ?varImpPlot).
+
+========================================================
+
+```{r}
+importance(rf.boston)
+varImpPlot(rf.boston)
+```
+
+
+========================================================
+
+  Excercise 1.13
+     
+      * write a "for" loop to record the prediction MSE for all 13 possible values of "mtry". (hint: for(mtry_t in 1:13){...})
+
+========================================================
+
+```{r}
+test.err=double(13)
+for(mtry_t in 1:13){
+  fit=randomForest(medv~.,data=data_train,mtry=mtry_t,ntree=100)
+  pred=predict(fit,data_test)
+  test.err[mtry_t]=mean(( pred -data_test$medv)^2)
+}
+plot(test.err)
+```
+
+
+========================================================
+
+Boosting
+
+========================================================
+
+
+Here we use the gbm package, and within it the gbm() function, to fit boosted regression trees to the Boston data set. 
+
+```{r}
+library (gbm)
+set.seed (517)
+boost.boston =gbm(medv~.,data=data_train, distribution="gaussian",
+n.trees =1000, interaction.depth =2)
+summary(boost.boston)
+```
+
+The option distribution="gaussian" since this is a regression problem; if it were a binary classification problem, we would use distribution="bernoulli". The argument n.trees=1000 indicates that we want 1000 trees, and the option interaction.depth=2 limits the depth of each tree. The summary() function produces a relative influence plot and also outputs the relative influence statistics.
+
+
+We now use the boosted model to predict medv on the test set, and record MSE. Does the boosted model outperfom random forests model built early?
+```{r}
+pred.boost=predict(boost.boston,newdata =data_test, n.trees =1000)
+mean((pred.boost-data_test$medv)^2)
+```
+
+The default shrinkage parameter lambda is 0.001. We can specify its value by adding argument shrinkage in the gbm() function, for example shrinkage=0.05. 
+
+========================================================
+
+  Excercise 1.14
+  
+      * Rebuild boosted regression tree model but assign shrinkage parameter to be 0.1.
+      * Evaluate the model using the test set and record the MSE to compare with that obtained from former boosted regression tree.
+      * Rebuild boosted regression tree model but assign shrinkage parameter to be 0.1 and depth of the tree to be 4.
+      * Evaluate the model using the test set and record the MSE to compare with that obtained from former boosted regression tree.
+
+========================================================
+
+```{r}
+boost.boston =gbm(medv~.,data=data_train, distribution="gaussian",
+shrinkage=0.1, n.trees =1000, interaction.depth =1)
+pred.boost=predict(boost.boston,newdata =data_test, n.trees =1000)
+mean((pred.boost-data_test$medv)^2)
+boost.boston =gbm(medv~.,data=data_train, distribution="gaussian",
+shrinkage=0.1, n.trees =1000, interaction.depth =4)
+pred.boost=predict(boost.boston,newdata =data_test, n.trees =1000)
+mean((pred.boost-data_test$medv)^2)
+```
+
+========================================================
+
+
+Now let's apply what we have learned on a brand new data set, credit_data. The data set set in the `modeldata` package. It contains a data set from a credit scoring analysis project. Description of the data variable can be found: https://github.com/gastonstat/CreditScoring 
+
+```{r}
+library(modeldata)
+data(credit_data)
+credit_data=na.omit(credit_data)
+#There are some missing data in the data set, using na.omit() to remove them.
+```
+
+The goal is to build a model to predict variable "Status" using the rest of variables. 
+
+========================================================
+
+Excercise 1.15 
+
+   * Use skim() function to look at the summary of the data
+   
+   * Divide the dataset into two part, training set (half the dataset) and test set (the other half the dataset). 
+   
+   * Fit a standard CART tree (with pruning) to the training set, plot the tree
+   
+   * Predict "Status" using the test set and record the classification error
+   
+   * Build an random forest model to the data, evaluate using the test set record the classification error 
+   
+   * Build a boosting model to the data, evaluate using the test set record the classification error 
+
+========================================================
+
+```{r}
+set.seed (180)
+train = sample (1: nrow(credit_data), floor(nrow(credit_data )/2))
+data_train=credit_data[train,]
+data_test=credit_data[-train,]
+tree.credit=tree(Status~.,data_train)
+summary(tree.credit)
+plot(tree.credit)
+text(tree.credit,pretty =0)
+tree.pred=predict(tree.credit,data_test,type="class")
+class_table=table(tree.pred, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+
+cv.credit =cv.tree(tree.credit, FUN=prune.misclass)
+plot(cv.boston)
+prune.credit =prune.misclass(tree.credit ,best =4)
+plot(prune.credit)
+text(prune.credit,pretty =0)
+tree.pred=predict(prune.credit,data_test,type="class")
+class_table=table(tree.pred, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+
+set.seed (472)
+bag.credit =randomForest(Status~.,data=data_train,mtry=13, ntree=10, importance =TRUE)
+bag.credit
+
+pred.bag = predict (bag.credit,newdata =data_test,type="class")
+class_table=table(pred.bag, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+
+bag.credit =randomForest(Status~.,data=data_train,mtry=13, ntree=1000, importance =TRUE)
+bag.credit
+
+pred.bag = predict (bag.credit,newdata =data_test,type="class")
+class_table=table(pred.bag, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+
+rf.credit =randomForest(Status~.,data=data_train,mtry=4, ntree=1000, importance =TRUE)
+rf.credit
+
+pred.rf = predict (rf.credit,newdata =data_test,type="class")
+class_table=table(pred.rf, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+
+boost.credit =gbm(unclass(Status)-1~.,data=data_train, distribution="bernoulli", n.trees =1000, interaction.depth =2)
+summary(boost.credit)
+
+pred.boost=predict(boost.credit,newdata =data_test, n.trees =1000, type="response")
+status_pred=ifelse(pred.boost<=0.5,"bad","good")
+class_table=table(status_pred, data_test$Status)
+success_rate=(class_table[1,1]+class_table[2,2])/sum(class_table)
+success_rate
+```
